@@ -46,6 +46,8 @@ lerna-debug.log*
 # misc
 .DS_Store
 *.pem
+server
+*.map
 
 # local db
 *.db*
