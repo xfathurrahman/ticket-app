@@ -1,17 +1,14 @@
-import { createClient } from "@libsql/client";
+import { neon } from "@neondatabase/serverless";
 import { env } from "@ticket-app/env/server";
-import { drizzle } from "drizzle-orm/libsql";
+import { drizzle } from "drizzle-orm/neon-http";
 
 import * as schema from "./schema";
 
 export function createDb() {
-	const client = createClient({
-		url: env.DATABASE_URL,
-	});
-
-	return drizzle({ client, schema });
+	const sql = neon(env.DATABASE_URL);
+	return drizzle(sql, { schema });
 }
 
 export const db = createDb();
 export { eq } from "drizzle-orm";
-export { tickets } from "./schema";
+export { tickets, tickets } from "./schema";

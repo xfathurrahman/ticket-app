@@ -1,17 +1,16 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
-export const tickets = sqliteTable("tickets", {
+export const tickets = pgTable("tickets", {
 	id: text("id").primaryKey(),
-	title: text("title").notNull(),
-	category: text("category").notNull(),
-	priority: text("priority").notNull(),
-	status: text("status").notNull().default("open"),
-	assignedTo: text("assigned_to").notNull(),
+	title: varchar("title", { length: 255 }).notNull(),
+	category: varchar("category", { length: 50 }).notNull(),
+	priority: varchar("priority", { length: 50 }).notNull(),
+	status: varchar("status", { length: 50 }).notNull().default("open"),
+	assignedTo: varchar("assigned_to", { length: 255 }).notNull(),
 	notes: text("notes"),
-	createdAt: integer("created_at", { mode: "timestamp_ms" })
+	createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: "date" })
 		.notNull()
-		.$defaultFn(() => new Date()),
-	updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-		.notNull()
-		.$defaultFn(() => new Date()),
+		.defaultNow()
+		.$onUpdateFn(() => new Date()),
 });

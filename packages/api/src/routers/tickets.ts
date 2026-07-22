@@ -1,6 +1,16 @@
 import { db, tickets } from "@ticket-app/db";
 import { TRPCError } from "@trpc/server";
-import { and, asc, count, desc, eq, or, type SQL, sql } from "drizzle-orm";
+import {
+	and,
+	asc,
+	count,
+	desc,
+	eq,
+	ilike,
+	or,
+	type SQL,
+	sql,
+} from "drizzle-orm";
 
 import { publicProcedure, router } from "../index";
 import {
@@ -19,11 +29,11 @@ function buildWhere(input: {
 	const parts: SQL[] = [];
 	const search = input.search?.trim();
 	if (search) {
-		const pattern = `%${search.toLowerCase()}%`;
+		const pattern = `%${search}%`;
 		const searchClause = or(
-			sql`lower(${tickets.title}) like ${pattern}`,
-			sql`lower(${tickets.assignedTo}) like ${pattern}`,
-			sql`lower(coalesce(${tickets.notes}, '')) like ${pattern}`,
+			ilike(tickets.title, pattern),
+			ilike(tickets.assignedTo, pattern),
+			ilike(sql`coalesce(${tickets.notes}, '')`, pattern),
 		);
 		if (searchClause) parts.push(searchClause);
 	}
