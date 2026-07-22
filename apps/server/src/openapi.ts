@@ -15,9 +15,9 @@ const TicketSchema = z
 	.object({
 		id: z.string().openapi({ example: "550e8400-e29b-41d4-a716-446655440000" }),
 		title: z.string().openapi({ example: "Fix printer in Lobby" }),
-		category: categoryEnum.openapi({ example: "hardware" }),
-		priority: priorityEnum.openapi({ example: "high" }),
-		status: statusEnum.openapi({ example: "open" }),
+		category: categoryEnum,
+		priority: priorityEnum,
+		status: statusEnum,
 		assignedTo: z.string().openapi({ example: "fathur" }),
 		notes: z.string().nullable().openapi({ example: "The printer is jammed" }),
 		createdAt: z
@@ -34,9 +34,9 @@ const TicketSchema = z
 const CreateTicketSchema = z
 	.object({
 		title: z.string().openapi({ example: "Fix printer in Lobby" }),
-		category: categoryEnum.openapi({ example: "hardware" }),
-		priority: priorityEnum.openapi({ example: "high" }),
-		status: statusEnum.optional().openapi({ example: "open" }),
+		category: categoryEnum,
+		priority: priorityEnum,
+		status: statusEnum.optional(),
 		assignedTo: z.string().openapi({ example: "fathur" }),
 		notes: z.string().optional().openapi({ example: "Paper jam on tray 2" }),
 	})
