@@ -28,7 +28,7 @@ app.use(
 	}),
 );
 
-// Mount OpenAPI REST routes
+// Vercel deployment: Mount OpenAPI REST routes
 app.route("/", openapiRouter);
 
 app.get("/", (c) => {
