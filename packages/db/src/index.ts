@@ -11,4 +11,4 @@ export function createDb() {
 
 export const db = createDb();
 export { eq } from "drizzle-orm";
-export { tickets, tickets } from "./schema";
+export { tickets } from "./schema";
