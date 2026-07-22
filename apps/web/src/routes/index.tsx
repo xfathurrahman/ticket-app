@@ -1,51 +1,55 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-
+import { useMemo, useState } from "react";
+import type { Priority, Status } from "@/components/tickets/constants";
+import { StatsCards } from "@/components/tickets/stats-cards";
+import { TicketList } from "@/components/tickets/ticket-list";
 import { trpc } from "@/utils/trpc";
 
 export const Route = createFileRoute("/")({
-  component: HomeComponent,
+	component: DashboardPage,
 });
 
-const TITLE_TEXT = `
- ██████╗ ███████╗████████╗████████╗███████╗██████╗
- ██╔══██╗██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝██╔══██╗
- ██████╔╝█████╗     ██║      ██║   █████╗  ██████╔╝
- ██╔══██╗██╔══╝     ██║      ██║   ██╔══╝  ██╔══██╗
- ██████╔╝███████╗   ██║      ██║   ███████╗██║  ██║
- ╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝
+function DashboardPage() {
+	const [search] = useState("");
+	const [status] = useState<Status | "all">("all");
+	const [priority] = useState<Priority | "all">("all");
+	const [sortBy] = useState<"createdAt" | "priority" | "status">("createdAt");
+	const [sortDir] = useState<"asc" | "desc">("desc");
 
- ████████╗    ███████╗████████╗ █████╗  ██████╗██╗  ██╗
- ╚══██╔══╝    ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
-    ██║       ███████╗   ██║   ███████║██║     █████╔╝
-    ██║       ╚════██║   ██║   ██╔══██║██║     ██╔═██╗
-    ██║       ███████║   ██║   ██║  ██║╚██████╗██║  ██╗
-    ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
- `;
+	const filter = useMemo(
+		() => ({
+			search: search.trim() || undefined,
+			status: status === "all" ? undefined : status,
+			priority: priority === "all" ? undefined : priority,
+		}),
+		[search, status, priority],
+	);
 
-function HomeComponent() {
-  const healthCheck = useQuery(trpc.healthCheck.queryOptions());
+	const listQuery = useQuery(
+		trpc.tickets.list.queryOptions({
+			...filter,
+			sortBy,
+			sortDir,
+		}),
+	);
 
-  return (
-    <div className="container mx-auto max-w-3xl px-4 py-2">
-      <pre className="overflow-x-auto font-mono text-sm">{TITLE_TEXT}</pre>
-      <div className="grid gap-6">
-        <section className="rounded-lg border p-4">
-          <h2 className="mb-2 font-medium">API Status</h2>
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-2 w-2 rounded-full ${healthCheck.data ? "bg-green-500" : "bg-red-500"}`}
-            />
-            <span className="text-sm text-muted-foreground">
-              {healthCheck.isLoading
-                ? "Checking..."
-                : healthCheck.data
-                  ? "Connected"
-                  : "Disconnected"}
-            </span>
-          </div>
-        </section>
-      </div>
-    </div>
-  );
+	const statsQuery = useQuery(trpc.tickets.stats.queryOptions(filter));
+
+	return (
+		<div className="container mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6">
+			<div className="flex flex-col gap-1">
+				<h1 className="font-semibold text-xl tracking-tight">
+					IT Ticket Dashboard
+				</h1>
+				<p className="text-muted-foreground text-sm">
+					Track and manage internal IT support tickets.
+				</p>
+			</div>
+
+			<StatsCards stats={statsQuery.data} isLoading={statsQuery.isLoading} />
+
+			<TicketList tickets={listQuery.data} isLoading={listQuery.isLoading} />
+		</div>
+	);
 }
