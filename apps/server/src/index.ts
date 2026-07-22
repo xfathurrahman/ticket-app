@@ -5,7 +5,7 @@ import { env } from "@ticket-app/env/server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { openapiRouter } from "./openapi";
+import { openapiRouter } from "./openapi.js";
 
 const app = new Hono();
 
