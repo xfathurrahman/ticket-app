@@ -1,21 +1,20 @@
-# ticket-app
+# IT Ticket Dashboard
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Router, Hono, TRPC, and more.
+An internal IT support ticket management dashboard built on [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack).
 
-## Features
+## Features Implemented
 
-- **TypeScript** - For type safety and improved developer experience
-- **TanStack Router** - File-based routing with full type safety
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **Shared UI package** - shadcn/ui primitives live in `packages/ui`
-- **Hono** - Lightweight, performant server framework
-- **tRPC** - End-to-end type-safe APIs
-- **Bun** - Runtime environment
-- **Drizzle** - TypeScript-first ORM
-- **SQLite/Turso** - Database engine
-- **Biome** - Linting and formatting
-- **Husky** - Git hooks for code quality
-- **Turborepo** - Optimized monorepo build system
+- **Full Ticket CRUD**: Create, read, update, and delete tickets.
+- **Dynamic Stats**: Quick metrics for Total, Open, In Progress, and High Priority tickets.
+- **Advanced Filtering & Sorting**: Filter by status, priority, or perform a text search across title, assignee, and notes.
+- **Visual Status & Priority**: Color-coded badges for easy scanning.
+- **Responsive Design**: Adapts from a desktop data table to mobile-friendly cards.
+
+## Technologies Used
+
+- **Frontend**: React 19, TanStack Router, TanStack Query, Tailwind CSS v4, shadcn UI (Base UI).
+- **Backend**: Hono, tRPC, Drizzle ORM, Turso (SQLite).
+- **Tooling**: Bun, Biome, Husky, Turborepo.
 
 ## Getting Started
 
@@ -27,29 +26,23 @@ bun install
 
 ## Database Setup
 
-This project uses SQLite with Drizzle ORM.
+This project uses SQLite with Drizzle ORM. Local development uses a local file `local.db`.
 
-1. Start the local SQLite database (optional):
-
-```bash
-bun run db:local
-```
-
-2. Update your `.env` file in the `apps/server` directory with the appropriate connection details if needed.
-
-3. Apply the schema to your database:
+Apply the schema to your database:
 
 ```bash
 bun run db:push
 ```
 
-Then, run the development server:
+## Run the Application
+
+Start the development server:
 
 ```bash
 bun run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
+Open [http://localhost:3001](http://localhost:3001) in your browser to see the dashboard.
 The API is running at [http://localhost:3000](http://localhost:3000).
 
 ## UI Customization
@@ -60,78 +53,14 @@ React web apps in this stack share shadcn/ui primitives through `packages/ui`.
 - Update shared primitives in `packages/ui/src/components/*`
 - Adjust shadcn aliases or style config in `packages/ui/components.json` and `apps/web/components.json`
 
-### Add more shared components
-
-Run this from the project root to add more primitives to the shared UI package:
-
-```bash
-npx shadcn@latest add accordion dialog popover sheet table -c packages/ui
-```
-
-Import shared components like this:
-
-```tsx
-import { Button } from "@ticket-app/ui/components/button";
-```
-
-### Add app-specific blocks
-
-If you want to add app-specific blocks instead of shared primitives, run the shadcn CLI from `apps/web`.
-
 ## Deployment
 
 ### Vercel Services
 
 - Target: web + server
 - Config: `vercel.json`
-- Link the project first: bun run deploy:setup
-- Local Vercel dev: bun run dev:vercel
-- Sync preview env: bun run env:preview
-- Sync production env: bun run env:production
-- Dry-run check (no upload): bun run deploy:check
-- Preview deploy: bun run deploy
-- Production deploy: bun run deploy:prod
-- Web requests under `/api/*` route to the server service and are rewritten before reaching the backend.
-  Vercel Services share project environment variables, but deploys do not upload local `.env` files automatically. Link the project with `vercel link`, then run the env sync command before your first deploy (otherwise the deployment starts with no env vars), or pass one-off envs with `vercel deploy -e KEY=value`.
-  Pass Vercel CLI flags to the env sync command directly, for example: `bun run env:production --scope your-team`.
+- Link the project first: `bun run deploy:setup`
+- Preview deploy: `bun run deploy`
+- Production deploy: `bun run deploy:prod`
 
-For more details, see the guide on [Deploying to Vercel](https://www.better-t-stack.dev/docs/guides/vercel).
-
-## Git Hooks and Formatting
-
-- Initialize hooks: `bun run prepare`
-- Run checks: `bun run check`
-
-## Project Structure
-
-```
-ticket-app/
-├── apps/
-│   ├── web/         # Frontend application (React + TanStack Router)
-│   └── server/      # Backend API (Hono, TRPC)
-├── packages/
-│   ├── ui/          # Shared shadcn/ui components and styles
-│   ├── api/         # API layer / business logic
-│   └── db/          # Database schema & queries
-```
-
-## Available Scripts
-
-- `bun run dev`: Start all applications in development mode
-- `bun run build`: Build all applications
-- `bun run dev:web`: Start only the web application
-- `bun run dev:server`: Start only the server
-- `bun run check-types`: Check TypeScript types across all apps
-- `bun run db:push`: Push schema changes to database
-- `bun run db:generate`: Generate database client/types
-- `bun run db:migrate`: Run database migrations
-- `bun run db:studio`: Open database studio UI
-- `bun run db:local`: Start the local SQLite database
-- `bun run check`: Run Biome formatting and linting
-- `bun run deploy:setup`: Link this repo to a Vercel project (first-time setup)
-- `bun run dev:vercel`: Run the Vercel Services dev environment locally
-- `bun run env:preview`: Sync local env files to the Vercel preview environment
-- `bun run env:production`: Sync local env files to the Vercel production environment
-- `bun run deploy`: Create a Vercel preview deployment
-- `bun run deploy:prod`: Deploy to Vercel production
-- `bun run deploy:check`: Dry-run a deploy to preview framework detection and included files without uploading
+For Vercel environment variables, use the sync commands (`env:preview`, `env:production`) to push your local `.env` settings.
