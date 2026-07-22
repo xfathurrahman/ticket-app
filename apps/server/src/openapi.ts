@@ -5,11 +5,12 @@ import {
 	priorityEnum,
 	statusEnum,
 } from "@ticket-app/api/schemas/ticket";
-import { db, tickets } from "@ticket-app/db";
+import { db, eq, tickets } from "@ticket-app/db";
 
 export const openapiRouter = new OpenAPIHono();
 
-// 1. Definisikan Schema Zod (Bisa re-use yang sudah ada, tapi tambahkan openapi metadata)
+// --- Schemas ---
+
 const TicketSchema = z
 	.object({
 		id: z.string().openapi({ example: "550e8400-e29b-41d4-a716-446655440000" }),
@@ -30,43 +31,195 @@ const TicketSchema = z
 	})
 	.openapi("Ticket");
 
-// 2. Buat Spesifikasi Route
+const CreateTicketSchema = z
+	.object({
+		title: z.string().openapi({ example: "Fix printer in Lobby" }),
+		category: categoryEnum.openapi({ example: "hardware" }),
+		priority: priorityEnum.openapi({ example: "high" }),
+		status: statusEnum.optional().openapi({ example: "open" }),
+		assignedTo: z.string().openapi({ example: "fathur" }),
+		notes: z.string().optional().openapi({ example: "Paper jam on tray 2" }),
+	})
+	.openapi("CreateTicket");
+
+const UpdateTicketSchema = CreateTicketSchema.partial().openapi("UpdateTicket");
+
+const ErrorSchema = z
+	.object({
+		error: z.string().openapi({ example: "Ticket not found" }),
+	})
+	.openapi("ErrorResponse");
+
+// --- Routes ---
+
 const getTicketsRoute = createRoute({
 	method: "get",
 	path: "/api/tickets",
 	tags: ["Tickets"],
-	summary: "Get all tickets",
-	description:
-		"Retrieve a list of all IT tickets. Perfect for AI to read the current state.",
+	summary: "List all tickets",
+	description: "Retrieve a list of all IT tickets.",
 	responses: {
 		200: {
-			content: {
-				"application/json": {
-					schema: z.array(TicketSchema),
-				},
-			},
+			content: { "application/json": { schema: z.array(TicketSchema) } },
 			description: "List of tickets",
 		},
 	},
 });
 
-// 3. Implementasi Handler (Tinggal copy/call logic yang ada)
+const createTicketRoute = createRoute({
+	method: "post",
+	path: "/api/tickets",
+	tags: ["Tickets"],
+	summary: "Create a ticket",
+	description: "Create a new IT ticket.",
+	request: {
+		body: {
+			content: { "application/json": { schema: CreateTicketSchema } },
+		},
+	},
+	responses: {
+		201: {
+			content: { "application/json": { schema: TicketSchema } },
+			description: "The created ticket",
+		},
+	},
+});
+
+const updateTicketRoute = createRoute({
+	method: "patch",
+	path: "/api/tickets/{id}",
+	tags: ["Tickets"],
+	summary: "Update a ticket",
+	description: "Update an existing IT ticket by ID.",
+	request: {
+		params: z.object({
+			id: z
+				.string()
+				.openapi({ example: "550e8400-e29b-41d4-a716-446655440000" }),
+		}),
+		body: {
+			content: { "application/json": { schema: UpdateTicketSchema } },
+		},
+	},
+	responses: {
+		200: {
+			content: { "application/json": { schema: TicketSchema } },
+			description: "The updated ticket",
+		},
+		404: {
+			content: { "application/json": { schema: ErrorSchema } },
+			description: "Ticket not found",
+		},
+	},
+});
+
+const deleteTicketRoute = createRoute({
+	method: "delete",
+	path: "/api/tickets/{id}",
+	tags: ["Tickets"],
+	summary: "Delete a ticket",
+	description: "Delete an existing IT ticket by ID.",
+	request: {
+		params: z.object({
+			id: z
+				.string()
+				.openapi({ example: "550e8400-e29b-41d4-a716-446655440000" }),
+		}),
+	},
+	responses: {
+		200: {
+			content: {
+				"application/json": {
+					schema: z.object({ ok: z.boolean().openapi({ example: true }) }),
+				},
+			},
+			description: "Delete confirmation",
+		},
+		404: {
+			content: { "application/json": { schema: ErrorSchema } },
+			description: "Ticket not found",
+		},
+	},
+});
+
+// --- Handlers ---
+
 openapiRouter.openapi(getTicketsRoute, async (c) => {
 	const allTickets = await db.select().from(tickets);
 	return c.json(allTickets as unknown as z.infer<typeof TicketSchema>[], 200);
 });
 
-// 4. Daftarkan spec openapi.json
+openapiRouter.openapi(createTicketRoute, async (c) => {
+	const body = c.req.valid("json");
+	const id = crypto.randomUUID();
+	const [row] = await db
+		.insert(tickets)
+		.values({
+			id,
+			title: body.title,
+			category: body.category,
+			priority: body.priority,
+			status: body.status ?? "open",
+			assignedTo: body.assignedTo,
+			notes: body.notes?.trim() ? body.notes.trim() : null,
+		})
+		.returning();
+
+	return c.json(row as unknown as z.infer<typeof TicketSchema>, 201);
+});
+
+openapiRouter.openapi(updateTicketRoute, async (c) => {
+	const { id } = c.req.valid("param");
+	const body = c.req.valid("json");
+
+	const patch: Partial<typeof tickets.$inferInsert> = {
+		updatedAt: new Date(),
+	};
+	if (body.title !== undefined) patch.title = body.title;
+	if (body.category !== undefined) patch.category = body.category;
+	if (body.priority !== undefined) patch.priority = body.priority;
+	if (body.status !== undefined) patch.status = body.status;
+	if (body.assignedTo !== undefined) patch.assignedTo = body.assignedTo;
+	if (body.notes !== undefined)
+		patch.notes = body.notes?.trim() ? body.notes.trim() : null;
+
+	const [row] = await db
+		.update(tickets)
+		.set(patch)
+		.where(eq(tickets.id, id))
+		.returning();
+
+	if (!row) {
+		return c.json({ error: "Ticket not found" }, 404);
+	}
+	return c.json(row as unknown as z.infer<typeof TicketSchema>, 200);
+});
+
+openapiRouter.openapi(deleteTicketRoute, async (c) => {
+	const { id } = c.req.valid("param");
+	const [row] = await db
+		.delete(tickets)
+		.where(eq(tickets.id, id))
+		.returning({ id: tickets.id });
+
+	if (!row) {
+		return c.json({ error: "Ticket not found" }, 404);
+	}
+	return c.json({ ok: true }, 200);
+});
+
+// --- UI & Spec ---
+
 openapiRouter.doc("/openapi.json", {
 	openapi: "3.1.0",
 	info: {
-		title: "IT Ticket Dashboard API",
+		title: "IT Ticket API",
 		version: "1.0.0",
-		description: "API for managing IT Tickets. Designed for AI integration.",
+		description:
+			"API for managing IT Tickets. Designed for AI integration and external clients.",
 	},
 });
 
-// 5. Daftarkan UI Scalar
 openapiRouter.get(
 	"/docs",
 	apiReference({
