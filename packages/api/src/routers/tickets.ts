@@ -52,41 +52,45 @@ const statusRank = sql`case ${tickets.status}
   else 4 end`;
 
 export const ticketsRouter = router({
-	list: publicProcedure.input(listInput).query(async ({ input }) => {
-		const where = buildWhere(input);
-		const sortBy = input.sortBy ?? "createdAt";
-		const sortDir = input.sortDir ?? (sortBy === "priority" ? "asc" : "desc");
-		const dir = sortDir === "asc" ? asc : desc;
+	list: publicProcedure
+		.input(listInput.optional().default({}))
+		.query(async ({ input }) => {
+			const where = buildWhere(input);
+			const sortBy = input.sortBy ?? "createdAt";
+			const sortDir = input.sortDir ?? (sortBy === "priority" ? "asc" : "desc");
+			const dir = sortDir === "asc" ? asc : desc;
 
-		const orderBy =
-			sortBy === "priority"
-				? dir(priorityRank)
-				: sortBy === "status"
-					? dir(statusRank)
-					: dir(tickets.createdAt);
+			const orderBy =
+				sortBy === "priority"
+					? dir(priorityRank)
+					: sortBy === "status"
+						? dir(statusRank)
+						: dir(tickets.createdAt);
 
-		return db.select().from(tickets).where(where).orderBy(orderBy);
-	}),
+			return db.select().from(tickets).where(where).orderBy(orderBy);
+		}),
 
-	stats: publicProcedure.input(filterInput).query(async ({ input }) => {
-		const where = buildWhere(input);
-		const [row] = await db
-			.select({
-				total: count(),
-				open: sql<number>`sum(case when ${tickets.status} = 'open' then 1 else 0 end)`,
-				inProgress: sql<number>`sum(case when ${tickets.status} = 'in_progress' then 1 else 0 end)`,
-				highPriority: sql<number>`sum(case when ${tickets.priority} = 'high' then 1 else 0 end)`,
-			})
-			.from(tickets)
-			.where(where);
+	stats: publicProcedure
+		.input(filterInput.optional().default({}))
+		.query(async ({ input }) => {
+			const where = buildWhere(input);
+			const [row] = await db
+				.select({
+					total: count(),
+					open: sql<number>`sum(case when ${tickets.status} = 'open' then 1 else 0 end)`,
+					inProgress: sql<number>`sum(case when ${tickets.status} = 'in_progress' then 1 else 0 end)`,
+					highPriority: sql<number>`sum(case when ${tickets.priority} = 'high' then 1 else 0 end)`,
+				})
+				.from(tickets)
+				.where(where);
 
-		return {
-			total: Number(row?.total ?? 0),
-			open: Number(row?.open ?? 0),
-			inProgress: Number(row?.inProgress ?? 0),
-			highPriority: Number(row?.highPriority ?? 0),
-		};
-	}),
+			return {
+				total: Number(row?.total ?? 0),
+				open: Number(row?.open ?? 0),
+				inProgress: Number(row?.inProgress ?? 0),
+				highPriority: Number(row?.highPriority ?? 0),
+			};
+		}),
 
 	create: publicProcedure
 		.input(createTicketInput)
