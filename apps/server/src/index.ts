@@ -1,6 +1,7 @@
 import { trpcServer } from "@hono/trpc-server";
 // OpenAPI imports
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { Scalar } from "@scalar/hono-api-reference";
 import { createContext } from "@ticket-app/api/context";
 import { appRouter } from "@ticket-app/api/routers/index";
 import {
@@ -245,27 +246,14 @@ app.doc("/openapi.json", {
 	},
 });
 
-app.get("/docs", (c) => {
-	const html = `
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>IT Ticket API Reference</title>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-  </head>
-  <body>
-    <!-- Scalar API Reference -->
-    <script
-      id="api-reference"
-      data-url="/api/openapi.json"
-      data-theme="kepler"
-    ></script>
-    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
-  </body>
-</html>
-`;
-	return c.html(html);
-});
+app.get(
+	"/docs",
+	Scalar({
+		theme: "kepler",
+		spec: {
+			url: "/api/openapi.json",
+		},
+	}),
+);
 
 export default app;
