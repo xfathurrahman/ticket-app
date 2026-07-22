@@ -251,7 +251,7 @@ app.get(
 	apiReference({
 		theme: "kepler",
 		spec: {
-			url: "/openapi.json",
+			url: "/api/openapi.json",
 		},
 	}),
 );
