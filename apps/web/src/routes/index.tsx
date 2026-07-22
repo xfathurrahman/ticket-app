@@ -22,6 +22,7 @@ import {
 	type Status,
 	type Ticket,
 } from "@/components/tickets/constants";
+import { DeleteTicketDialog } from "@/components/tickets/delete-ticket-dialog";
 import { StatsCards } from "@/components/tickets/stats-cards";
 import { TicketFormDialog } from "@/components/tickets/ticket-form-dialog";
 import { TicketList } from "@/components/tickets/ticket-list";
@@ -59,6 +60,9 @@ function DashboardPage() {
 
 	const [formOpen, setFormOpen] = useState(false);
 	const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
+
+	const [deleteOpen, setDeleteOpen] = useState(false);
+	const [deletingTicket, setDeletingTicket] = useState<Ticket | null>(null);
 
 	// Debounce search
 	useEffect(() => {
@@ -108,9 +112,18 @@ function DashboardPage() {
 		},
 	});
 
+	const deleteMutation = useMutation({
+		...trpc.tickets.delete.mutationOptions(),
+		onSuccess: () => {
+			toast.success("Ticket deleted");
+			invalidate();
+			setDeleteOpen(false);
+		},
+	});
+
 	const handleFormSubmit = (data: Partial<Ticket>) => {
 		if (editingTicket) {
-			updateMutation.mutate({ id: editingTicket.id, ...data });
+			updateMutation.mutate({ id: editingTicket.id, ...(data as any) });
 		} else {
 			createMutation.mutate(data as any);
 		}
@@ -124,6 +137,15 @@ function DashboardPage() {
 	const handleEdit = (ticket: Ticket) => {
 		setEditingTicket(ticket);
 		setFormOpen(true);
+	};
+
+	const handleDelete = (ticket: Ticket) => {
+		setDeletingTicket(ticket);
+		setDeleteOpen(true);
+	};
+
+	const handleConfirmDelete = (ticket: Ticket) => {
+		deleteMutation.mutate({ id: ticket.id });
 	};
 
 	return (
@@ -150,7 +172,7 @@ function DashboardPage() {
 					<Select
 						items={statusFilterItems}
 						value={status}
-						onValueChange={setStatus}
+						onValueChange={(v) => setStatus(v as any)}
 					>
 						<SelectTrigger className="w-36">
 							<SelectValue />
@@ -168,7 +190,7 @@ function DashboardPage() {
 					<Select
 						items={priorityFilterItems}
 						value={priority}
-						onValueChange={setPriority}
+						onValueChange={(v) => setPriority(v as any)}
 					>
 						<SelectTrigger className="w-36">
 							<SelectValue />
@@ -183,7 +205,11 @@ function DashboardPage() {
 							</SelectGroup>
 						</SelectContent>
 					</Select>
-					<Select items={sortItems} value={sortBy} onValueChange={setSortBy}>
+					<Select
+						items={sortItems}
+						value={sortBy}
+						onValueChange={(v) => setSortBy(v as any)}
+					>
 						<SelectTrigger className="w-36">
 							<SelectValue />
 						</SelectTrigger>
@@ -208,6 +234,7 @@ function DashboardPage() {
 				tickets={listQuery.data}
 				isLoading={listQuery.isLoading}
 				onEdit={handleEdit}
+				onDelete={handleDelete}
 			/>
 
 			<TicketFormDialog
@@ -216,6 +243,14 @@ function DashboardPage() {
 				ticket={editingTicket}
 				onSubmit={handleFormSubmit}
 				isPending={createMutation.isPending || updateMutation.isPending}
+			/>
+
+			<DeleteTicketDialog
+				open={deleteOpen}
+				onOpenChange={setDeleteOpen}
+				ticket={deletingTicket}
+				onConfirm={handleConfirmDelete}
+				isPending={deleteMutation.isPending}
 			/>
 		</div>
 	);
