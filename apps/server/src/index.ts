@@ -21,7 +21,7 @@ app.use(
 	"/*",
 	cors({
 		origin: env.CORS_ORIGIN,
-		allowMethods: ["GET", "POST", "OPTIONS"],
+		allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
 	}),
 );
 
@@ -82,7 +82,7 @@ const ErrorSchema = z
 // --- OpenAPI Routes Specs ---
 const getTicketsRoute = createRoute({
 	method: "get",
-	path: "/api/tickets",
+	path: "/tickets",
 	tags: ["Tickets"],
 	summary: "List all tickets",
 	description: "Retrieve a list of all IT tickets.",
@@ -96,7 +96,7 @@ const getTicketsRoute = createRoute({
 
 const createTicketRoute = createRoute({
 	method: "post",
-	path: "/api/tickets",
+	path: "/tickets",
 	tags: ["Tickets"],
 	summary: "Create a ticket",
 	description: "Create a new IT ticket.",
@@ -115,7 +115,7 @@ const createTicketRoute = createRoute({
 
 const updateTicketRoute = createRoute({
 	method: "patch",
-	path: "/api/tickets/{id}",
+	path: "/tickets/{id}",
 	tags: ["Tickets"],
 	summary: "Update a ticket",
 	description: "Update an existing IT ticket by ID.",
@@ -143,7 +143,7 @@ const updateTicketRoute = createRoute({
 
 const deleteTicketRoute = createRoute({
 	method: "delete",
-	path: "/api/tickets/{id}",
+	path: "/tickets/{id}",
 	tags: ["Tickets"],
 	summary: "Delete a ticket",
 	description: "Delete an existing IT ticket by ID.",
@@ -236,6 +236,8 @@ app.openapi(deleteTicketRoute, async (c) => {
 });
 
 // --- UI & Spec ---
+// Docs live at public /docs (not under /api) — HTML UI, not an API endpoint.
+// REST/tRPC still go through /api/*; Vite/Vercel strip that prefix before Hono.
 app.doc("/openapi.json", {
 	openapi: "3.1.0",
 	info: {
@@ -244,15 +246,25 @@ app.doc("/openapi.json", {
 		description:
 			"API for managing IT Tickets. Designed for AI integration and external clients.",
 	},
+	servers: [
+		{
+			url: "/api",
+			description: "Public API (Vite proxy / Vercel)",
+		},
+		{
+			url: "/",
+			description: "Direct server (localhost:3000)",
+		},
+	],
 });
 
+// Absolute /openapi.json so Scalar works at public /docs (not nested under /api/docs)
 app.get(
 	"/docs",
 	Scalar({
+		url: "/openapi.json",
 		theme: "kepler",
-		spec: {
-			url: "/api/openapi.json",
-		},
+		pageTitle: "IT Ticket API",
 	}),
 );
 

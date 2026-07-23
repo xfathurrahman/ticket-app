@@ -26,7 +26,7 @@ bun install
 
 ## Database Setup
 
-This project uses SQLite with Drizzle ORM. Local development uses a local file `local.db`.
+This project uses PostgreSQL with Drizzle ORM. Set `DATABASE_URL` in `apps/server/.env` (see that file for the local default).
 
 Apply the schema to your database:
 
@@ -44,6 +44,16 @@ bun run dev
 
 Open [http://localhost:3001](http://localhost:3001) in your browser to see the dashboard.
 The API is running at [http://localhost:3000](http://localhost:3000).
+
+### API docs (Scalar)
+
+Interactive OpenAPI docs are served as a **top-level UI route** (not under `/api`):
+
+- Via web dev server: [http://localhost:3001/docs](http://localhost:3001/docs)
+- Direct to Hono: [http://localhost:3000/docs](http://localhost:3000/docs)
+- Spec: `/openapi.json`
+
+REST ticket endpoints (for external/AI clients) are under `/api/tickets` on the public origin; tRPC stays at `/api/trpc`.
 
 ## UI Customization
 
